@@ -1553,6 +1553,7 @@ enchant.EventTarget = enchant.Class.create({
                 stage = document.createElement('div');
                 stage.id = 'enchant-stage';
                 stage.style.position = 'absolute';
+                stage.style.overflow = 'hidden';
 
                 if (document.body.firstChild) {
                     document.body.insertBefore(stage, document.body.firstChild);
@@ -2221,8 +2222,8 @@ enchant.EventTarget = enchant.Class.create({
                     var width = sprite.image.context.measureText('Touch to Start').width;
                     sprite.image.context.fillText('Touch to Start', (core.width - width) / 2, size - 1);
                     scene.addChild(sprite);
-                    document.addEventListener('mousedown', function waitTouch() {
-                        document.removeEventListener('mousedown', waitTouch);
+                    document.addEventListener(Event.TOUCH_START, function waitTouch() {
+                        document.removeEventListener(Event.TOUCH_START, waitTouch);
                         core._touched = true;
                         core.removeScene(scene);
                         core.start(d);
@@ -3920,7 +3921,7 @@ enchant.Sprite = enchant.Class.create(enchant.Entity, {
         var image = this._image,
             w = this._width, h = this._height,
             iw, ih, elem, sx, sy, sw, sh;
-        if (image && w !== 0 && h !== 0) {
+        if (image && Number(w) > 0 && Number(h) > 0) {
             iw = image.width, ih = image.height;
             if (iw < w || ih < h) {
                 ctx.fillStyle = enchant.Surface._getPattern(image);
@@ -6826,6 +6827,7 @@ enchant.DOMSound = enchant.Class.create(enchant.EventTarget, {
          * @type {Number}
          */
         this.duration = 0;
+        this._loop = false;
         throw new Error("Illegal Constructor");
     },
     /**
@@ -6839,9 +6841,41 @@ enchant.DOMSound = enchant.Class.create(enchant.EventTarget, {
      * Startet die Wiedergabe.
      [/lang]
      */
-    play: function() {
+    play: function(dup, loop) {
         if (this._element) {
             this._element.play();
+        }
+        this._loop = (loop || false);
+        if (this._loop) {
+            this._loopCheck();
+        }
+    },
+    /**
+     [lang:ja]
+     * .
+     [/lang]
+     [lang:en]
+     * Handle Looping.
+     [/lang]
+     [lang:de]
+     * Loop die Wiedergabe.
+     [/lang]
+     */
+    _loopCheck: function() {
+        var loopCheckFrequency = 500,
+            that = this;
+        if (this._loop && this._element) {
+            if (this.currentTime >= (this.duration - (loopCheckFrequency / 1000))) {
+                setTimeout(function() {
+                    that.stop();
+                    that.play(false,true);
+                }, loopCheckFrequency);
+                
+            } else {
+                setTimeout(function() {
+                    that._loopCheck();
+                }, loopCheckFrequency);
+            }
         }
     },
     /**
@@ -6872,6 +6906,7 @@ enchant.DOMSound = enchant.Class.create(enchant.EventTarget, {
      [/lang]
      */
     stop: function() {
+        this._loop = false;
         this.pause();
         this.currentTime = 0;
     },
@@ -7023,6 +7058,7 @@ enchant.DOMSound.load = function(src, type, callback, onerror) {
             embed.allowscriptaccess = 'always';
             embed.style.position = 'absolute';
             embed.style.left = '-1px';
+            enchant.Core.instance._element.appendChild(embed);
             sound.addEventListener('load', function() {
                 Object.defineProperties(embed, {
                     currentTime: {
@@ -7043,9 +7079,15 @@ enchant.DOMSound.load = function(src, type, callback, onerror) {
                     }
                 });
                 sound._element = embed;
-                sound.duration = embed.getDuration();
+                try {
+                    // Wait for all browser events to finish before getting the duration from Flash (Firefox 22+, Chrome)
+                    (setTimeout(function() {sound.duration = sound._element.getDuration();}, 0));
+                } catch (e) {
+                    
+                }
+                
             });
-            enchant.Core.instance._element.appendChild(embed);
+            
             enchant.DOMSound[id] = sound;
         } else {
             window.setTimeout(function() {
@@ -7080,11 +7122,12 @@ enchant.WebAudioSound = enchant.Class.create(enchant.EventTarget, {
         this.src = actx.createBufferSource();
         this.buffer = null;
         this._volume = 1;
+        this._loop = false;
         this._currentTime = 0;
         this._state = 0;
         this.connectTarget = enchant.WebAudioSound.destination;
     },
-    play: function(dup) {
+    play: function(dup, loop) {
         var actx = enchant.WebAudioSound.audioContext;
         if (this._state === 2) {
             this.src.connect(this.connectTarget);
@@ -7096,7 +7139,9 @@ enchant.WebAudioSound = enchant.Class.create(enchant.EventTarget, {
             this.src.buffer = this.buffer;
             this.src.gain.value = this._volume;
             this.src.connect(this.connectTarget);
+            this.src.loop = this._loop = (loop || false);
             this.src.noteOn(0);
+            this.actx = actx;
         }
         this._state = 1;
     },
@@ -7108,6 +7153,7 @@ enchant.WebAudioSound = enchant.Class.create(enchant.EventTarget, {
     stop: function() {
         this.src.noteOff(0);
         this._state = 0;
+        this.actx = null;
     },
     clone: function() {
         var sound = new enchant.WebAudioSound();
@@ -7115,12 +7161,23 @@ enchant.WebAudioSound = enchant.Class.create(enchant.EventTarget, {
         return sound;
     },
     dulation: {
+        // Possible misspelling?  WebAudio Buffers have no such property 'dulation'
         get: function() {
             if (this.buffer) {
                 return this.buffer.dulation;
             } else {
                 return 0;
             }
+        }
+    },
+    duration: {
+        get: function() {
+            return (this.buffer && this.buffer.duration) || 0;
+            // if (this.buffer) {
+            //     return this.buffer.duration;
+            // } else {
+            //     return 0;
+            // }
         }
     },
     volume: {
@@ -7137,12 +7194,11 @@ enchant.WebAudioSound = enchant.Class.create(enchant.EventTarget, {
     },
     currentTime: {
         get: function() {
-            window.console.log('currentTime is not allowed');
-            return this._currentTime;
+            return parseFloat(this.actx && this.actx.currentTime) || -1;
         },
         set: function(time) {
-            window.console.log('currentTime is not allowed');
-            this._currentTime = time;
+            return this.actx && (this._state === 1 ? this.actx.noteOn(time) : this.actx.noteOff(time));
+            // this._currentTime = time;
         }
     }
 });

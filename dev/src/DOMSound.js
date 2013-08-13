@@ -54,6 +54,7 @@ enchant.DOMSound = enchant.Class.create(enchant.EventTarget, {
          * @type {Number}
          */
         this.duration = 0;
+        this._loop = false;
         throw new Error("Illegal Constructor");
     },
     /**
@@ -67,9 +68,41 @@ enchant.DOMSound = enchant.Class.create(enchant.EventTarget, {
      * Startet die Wiedergabe.
      [/lang]
      */
-    play: function() {
+    play: function(dup, loop) {
         if (this._element) {
             this._element.play();
+        }
+        this._loop = (loop || false);
+        if (this._loop) {
+            this._loopCheck();
+        }
+    },
+    /**
+     [lang:ja]
+     * .
+     [/lang]
+     [lang:en]
+     * Handle Looping.
+     [/lang]
+     [lang:de]
+     * Loop die Wiedergabe.
+     [/lang]
+     */
+    _loopCheck: function() {
+        var loopCheckFrequency = 500,
+            that = this;
+        if (this._loop && this._element) {
+            if (this.currentTime >= (this.duration - (loopCheckFrequency / 1000))) {
+                setTimeout(function() {
+                    that.stop();
+                    that.play(false,true);
+                }, loopCheckFrequency);
+                
+            } else {
+                setTimeout(function() {
+                    that._loopCheck();
+                }, loopCheckFrequency);
+            }
         }
     },
     /**
@@ -100,6 +133,7 @@ enchant.DOMSound = enchant.Class.create(enchant.EventTarget, {
      [/lang]
      */
     stop: function() {
+        this._loop = false;
         this.pause();
         this.currentTime = 0;
     },
@@ -251,6 +285,7 @@ enchant.DOMSound.load = function(src, type, callback, onerror) {
             embed.allowscriptaccess = 'always';
             embed.style.position = 'absolute';
             embed.style.left = '-1px';
+            enchant.Core.instance._element.appendChild(embed);
             sound.addEventListener('load', function() {
                 Object.defineProperties(embed, {
                     currentTime: {
@@ -271,9 +306,15 @@ enchant.DOMSound.load = function(src, type, callback, onerror) {
                     }
                 });
                 sound._element = embed;
-                sound.duration = embed.getDuration();
+                try {
+                    // Wait for all browser events to finish before getting the duration from Flash (Firefox 22+, Chrome)
+                    (setTimeout(function() {sound.duration = sound._element.getDuration();}, 0));
+                } catch (e) {
+                    
+                }
+                
             });
-            enchant.Core.instance._element.appendChild(embed);
+            
             enchant.DOMSound[id] = sound;
         } else {
             window.setTimeout(function() {

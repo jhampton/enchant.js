@@ -74,6 +74,7 @@
                 stage = document.createElement('div');
                 stage.id = 'enchant-stage';
                 stage.style.position = 'absolute';
+                stage.style.overflow = 'hidden';
 
                 if (document.body.firstChild) {
                     document.body.insertBefore(stage, document.body.firstChild);
@@ -742,8 +743,8 @@
                     var width = sprite.image.context.measureText('Touch to Start').width;
                     sprite.image.context.fillText('Touch to Start', (core.width - width) / 2, size - 1);
                     scene.addChild(sprite);
-                    document.addEventListener('mousedown', function waitTouch() {
-                        document.removeEventListener('mousedown', waitTouch);
+                    document.addEventListener(Event.TOUCH_START, function waitTouch() {
+                        document.removeEventListener(Event.TOUCH_START, waitTouch);
                         core._touched = true;
                         core.removeScene(scene);
                         core.start(d);

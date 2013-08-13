@@ -188,7 +188,7 @@ enchant.Sprite = enchant.Class.create(enchant.Entity, {
         var image = this._image,
             w = this._width, h = this._height,
             iw, ih, elem, sx, sy, sw, sh;
-        if (image && w !== 0 && h !== 0) {
+        if (image && Number(w) > 0 && Number(h) > 0) {
             iw = image.width, ih = image.height;
             if (iw < w || ih < h) {
                 ctx.fillStyle = enchant.Surface._getPattern(image);

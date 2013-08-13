@@ -22,11 +22,12 @@ enchant.WebAudioSound = enchant.Class.create(enchant.EventTarget, {
         this.src = actx.createBufferSource();
         this.buffer = null;
         this._volume = 1;
+        this._loop = false;
         this._currentTime = 0;
         this._state = 0;
         this.connectTarget = enchant.WebAudioSound.destination;
     },
-    play: function(dup) {
+    play: function(dup, loop) {
         var actx = enchant.WebAudioSound.audioContext;
         if (this._state === 2) {
             this.src.connect(this.connectTarget);
@@ -38,7 +39,9 @@ enchant.WebAudioSound = enchant.Class.create(enchant.EventTarget, {
             this.src.buffer = this.buffer;
             this.src.gain.value = this._volume;
             this.src.connect(this.connectTarget);
+            this.src.loop = this._loop = (loop || false);
             this.src.noteOn(0);
+            this.actx = actx;
         }
         this._state = 1;
     },
@@ -50,6 +53,7 @@ enchant.WebAudioSound = enchant.Class.create(enchant.EventTarget, {
     stop: function() {
         this.src.noteOff(0);
         this._state = 0;
+        this.actx = null;
     },
     clone: function() {
         var sound = new enchant.WebAudioSound();
@@ -57,12 +61,23 @@ enchant.WebAudioSound = enchant.Class.create(enchant.EventTarget, {
         return sound;
     },
     dulation: {
+        // Possible misspelling?  WebAudio Buffers have no such property 'dulation'
         get: function() {
             if (this.buffer) {
                 return this.buffer.dulation;
             } else {
                 return 0;
             }
+        }
+    },
+    duration: {
+        get: function() {
+            return (this.buffer && this.buffer.duration) || 0;
+            // if (this.buffer) {
+            //     return this.buffer.duration;
+            // } else {
+            //     return 0;
+            // }
         }
     },
     volume: {
@@ -79,12 +94,11 @@ enchant.WebAudioSound = enchant.Class.create(enchant.EventTarget, {
     },
     currentTime: {
         get: function() {
-            window.console.log('currentTime is not allowed');
-            return this._currentTime;
+            return parseFloat(this.actx && this.actx.currentTime) || -1;
         },
         set: function(time) {
-            window.console.log('currentTime is not allowed');
-            this._currentTime = time;
+            return this.actx && (this._state === 1 ? this.actx.noteOn(time) : this.actx.noteOff(time));
+            // this._currentTime = time;
         }
     }
 });
