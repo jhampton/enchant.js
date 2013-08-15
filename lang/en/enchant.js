@@ -857,7 +857,7 @@ enchant.EventTarget = enchant.Class.create({
          * @constructs
          * @extends enchant.EventTarget
          */
-        initialize: function(width, height) {
+        initialize: function(width, height, center) {
             if (window.document.body === null) {
                 // @TODO postpone initialization after window.onload
                 throw new Error("document.body is null. Please excute 'new Core()' in window.onload.");
@@ -886,7 +886,12 @@ enchant.EventTarget = enchant.Class.create({
             if (!stage) {
                 stage = document.createElement('div');
                 stage.id = 'enchant-stage';
-                stage.style.position = 'absolute';
+                if (center) {
+                    stage.style.margin = '0 auto';
+                } else {
+                    stage.style.position = 'absolute';
+                }
+                
                 stage.style.overflow = 'hidden';
 
                 if (document.body.firstChild) {
