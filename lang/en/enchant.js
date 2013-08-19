@@ -4106,6 +4106,9 @@ enchant.CanvasLayer = enchant.Class.create(enchant.Group, {
     _getEntityByPosition: function(x, y) {
         var core = enchant.Core.instance;
         var ctx = this._dctx;
+        // Hack to adjust for centered/repositioned canvas element
+        x -= this._element.parentElement.offsetLeft / core.scale;
+        y -= this._element.parentElement.offsetTop / core.scale;
         if (this._lastDetected < core.frame) {
             ctx.clearRect(0, 0, this.width, this.height);
             enchant.CanvasRenderer.instance.detectRender(ctx, this);
