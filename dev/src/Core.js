@@ -750,8 +750,8 @@
                     var width = sprite.image.context.measureText('Touch to Start').width;
                     sprite.image.context.fillText('Touch to Start', (core.width - width) / 2, size - 1);
                     scene.addChild(sprite);
-                    document.addEventListener(Event.TOUCH_START, function waitTouch() {
-                        document.removeEventListener(Event.TOUCH_START, waitTouch);
+                    document.addEventListener(enchant.Event.TOUCH_START, function waitTouch() {
+                        document.removeEventListener(enchant.Event.TOUCH_START, waitTouch);
                         core._touched = true;
                         core.removeScene(scene);
                         core.start(d);
