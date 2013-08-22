@@ -52,11 +52,12 @@ enchant.ENV = {
     RETINA_DISPLAY: (function() {
         if (navigator.userAgent.indexOf('iPhone') !== -1 && window.devicePixelRatio === 2) {
             var viewport = document.querySelector('meta[name="viewport"]');
+            // If we already specified a META tag, why are you changing it?
             if (viewport == null) {
                 viewport = document.createElement('meta');
                 document.head.appendChild(viewport);
+                viewport.setAttribute('content', 'width=640');
             }
-            viewport.setAttribute('content', 'width=640');
             return true;
         } else {
             return false;

@@ -152,7 +152,9 @@ enchant.Label = enchant.Class.create(enchant.Entity, {
         var charWidth, amount, line, text, c, buf, increase, length;
         var bufWidth;
         if (this._splitText) {
-            ctx.textBaseline = 'top';
+            // ctx.textBaseline = 'top';
+            // Browsers inconsistently adjust to the "top" baseline.  Alphabetic is more consistent.
+            ctx.textBaseline = 'alphabetic';
             ctx.font = this.font;
             ctx.fillStyle = this.color || '#000000';
             charWidth = ctx.measureText(' ').width;
