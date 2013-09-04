@@ -735,9 +735,14 @@
 
             if (!this._activated) {
                 this._activated = true;
-                if (enchant.ENV.SOUND_ENABLED_ON_MOBILE_SAFARI && !core._touched &&
+                // JTH - Removing the following additional filters.  Android browsers (including Chrome)
+                // also require this kind of "Touch To Start" as of Android OS 4.x (based on experience)
+                /*
+                 &&
                     (navigator.userAgent.indexOf('iPhone OS') !== -1 ||
-                    navigator.userAgent.indexOf('iPad') !== -1)) {
+                    navigator.userAgent.indexOf('iPad') !== -1)
+                */
+                if (enchant.ENV.SOUND_ENABLED_ON_MOBILE_SAFARI && !core._touched && core.TOUCH_ENABLED) {
                     var d = new enchant.Deferred();
                     var scene = new enchant.Scene();
                     scene.backgroundColor = '#000';
