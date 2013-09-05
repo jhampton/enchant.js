@@ -742,7 +742,7 @@
                     (navigator.userAgent.indexOf('iPhone OS') !== -1 ||
                     navigator.userAgent.indexOf('iPad') !== -1)
                 */
-                if (enchant.ENV.SOUND_ENABLED_ON_MOBILE_SAFARI && !core._touched && core.TOUCH_ENABLED) {
+                if (enchant.ENV.SOUND_ENABLED_ON_MOBILE_SAFARI && !core._touched && enchant.ENV.TOUCH_ENABLED) {
                     var d = new enchant.Deferred();
                     var scene = new enchant.Scene();
                     scene.backgroundColor = '#000';
